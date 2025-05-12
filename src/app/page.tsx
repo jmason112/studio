@@ -135,13 +135,12 @@ export default function DashboardPage() {
 
   const handleAnomaliesDetected = useCallback((anomalousEvents: AnomalousEvent[]) => {
     setClientSideLogs(prevLogs => {
-      const anomalyMap = new Map(anomalousEvents.map(ae => `${ae.timestamp}-${ae.source}-${ae.message}`));
+      // Create a Map where the key is a unique identifier string and the value is the AnomalousEvent object
+      const anomalyMap = new Map(anomalousEvents.map(ae => [`${ae.timestamp}-${ae.source}-${ae.message}`, ae]));
       
       return prevLogs.map(log => {
         const anomalyKey = `${log.timestamp}-${log.source}-${log.message}`;
-        const matchedAnomaly = anomalousEvents.find(
-          ae => ae.timestamp === log.timestamp && ae.message === log.message && ae.source === log.source
-        );
+        const matchedAnomaly = anomalyMap.get(anomalyKey); // Retrieve the matching AnomalousEvent object
 
         if (matchedAnomaly) {
           return {
