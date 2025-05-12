@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -7,9 +8,12 @@ import { AppHeader } from '@/components/dashboard/app-header';
 import { LogFilters } from '@/components/dashboard/log-filters';
 import { LogTable } from '@/components/dashboard/log-table';
 import { AnomalyDetectionSection } from '@/components/dashboard/anomaly-detection-section';
-import type { LogEntry, Filters, Severity, AnomalousEvent } from '@/lib/types';
+import { DashboardChartsSection } from '@/components/dashboard/dashboard-charts-section';
+import type { LogEntry, Filters, AnomalousEvent } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import { parseISO, isWithinInterval } from 'date-fns';
+import { Button } from "@/components/ui/button";
+
 
 // API interaction functions
 const fetchLogs = async (): Promise<LogEntry[]> => {
@@ -57,10 +61,22 @@ export default function DashboardPage() {
     dateRange: { from: undefined, to: undefined },
   });
 
+  // Client-side logs state that can be updated by AI anomaly detection
   const [clientSideLogs, setClientSideLogs] = useState<LogEntry[]>([]);
 
   useEffect(() => {
-    setClientSideLogs(allLogs);
+    // Initialize clientSideLogs with fetched logs, preserving anomaly flags if any log ID matches
+    setClientSideLogs(prevClientLogs => {
+      const prevMap = new Map(prevClientLogs.map(log => [log.id, log]));
+      return allLogs.map(log => {
+        const existingLog = prevMap.get(log.id);
+        if (existingLog) {
+          // Preserve anomaly status from client if log re-appears from server
+          return { ...log, isAnomalous: existingLog.isAnomalous, anomalyExplanation: existingLog.anomalyExplanation };
+        }
+        return log;
+      });
+    });
   }, [allLogs]);
 
 
@@ -69,8 +85,6 @@ export default function DashboardPage() {
   }, []);
 
   const handleClearIngestedLogs = () => {
-    // This function now calls the mutation to clear logs on the server.
-    // Client-side log clearing will happen automatically due to query invalidation.
     clearLogsMutation.mutate();
   };
 
@@ -97,15 +111,20 @@ export default function DashboardPage() {
 
       let dateMatch = true;
       if (filters.dateRange.from || filters.dateRange.to) {
-        const logDate = parseISO(log.timestamp);
-        const fromDate = filters.dateRange.from;
-        const toDate = filters.dateRange.to;
-        if (fromDate && toDate) {
-          dateMatch = isWithinInterval(logDate, { start: fromDate, end: toDate });
-        } else if (fromDate) {
-          dateMatch = logDate >= fromDate;
-        } else if (toDate) {
-          dateMatch = logDate <= toDate;
+        try {
+          const logDate = parseISO(log.timestamp);
+          const fromDate = filters.dateRange.from;
+          const toDate = filters.dateRange.to;
+          if (fromDate && toDate) {
+            dateMatch = isWithinInterval(logDate, { start: fromDate, end: toDate });
+          } else if (fromDate) {
+            dateMatch = logDate >= fromDate;
+          } else if (toDate) {
+            dateMatch = logDate <= toDate;
+          }
+        } catch (e) {
+          console.warn(`Invalid date format for log: ${log.id}`, log.timestamp);
+          dateMatch = false; // Or handle as per requirement, e.g., include if date is invalid
         }
       }
       
@@ -116,10 +135,14 @@ export default function DashboardPage() {
 
   const handleAnomaliesDetected = useCallback((anomalousEvents: AnomalousEvent[]) => {
     setClientSideLogs(prevLogs => {
+      const anomalyMap = new Map(anomalousEvents.map(ae => `${ae.timestamp}-${ae.source}-${ae.message}`));
+      
       return prevLogs.map(log => {
+        const anomalyKey = `${log.timestamp}-${log.source}-${log.message}`;
         const matchedAnomaly = anomalousEvents.find(
           ae => ae.timestamp === log.timestamp && ae.message === log.message && ae.source === log.source
         );
+
         if (matchedAnomaly) {
           return {
             ...log,
@@ -127,8 +150,16 @@ export default function DashboardPage() {
             anomalyExplanation: matchedAnomaly.explanation,
           };
         }
-        // Reset if not in current batch of anomalies
-        return { ...log, isAnomalous: log.isAnomalous && anomalousEvents.some(ae => ae.timestamp === log.timestamp && ae.message === log.message), anomalyExplanation: log.isAnomalous && anomalousEvents.some(ae => ae.timestamp === log.timestamp && ae.message === log.message) ? log.anomalyExplanation : undefined};
+        // If not in current anomaly batch, retain original anomaly status unless explicitly cleared elsewhere
+        // This logic keeps existing anomalies unless they are re-evaluated.
+        // If you want to clear old anomalies not in the new batch, adjust here.
+        return {
+            ...log,
+            // isAnomalous: false, // Option 1: Clear if not in new batch
+            // anomalyExplanation: undefined,
+            isAnomalous: log.isAnomalous, // Option 2: Retain old status (current behavior implied)
+            anomalyExplanation: log.anomalyExplanation,
+        };
       });
     });
   }, []);
@@ -161,9 +192,10 @@ export default function DashboardPage() {
           disabled={isLoadingLogs || clearLogsMutation.isPending}
           availableSources={availableSources}
         />
-        <LogTable logs={filteredLogs} isLoading={isLoadingLogs} />
+        <DashboardChartsSection logs={filteredLogs} isLoading={isLoadingLogs || clearLogsMutation.isPending} />
+        <LogTable logs={filteredLogs} isLoading={isLoadingLogs || clearLogsMutation.isPending} />
         <AnomalyDetectionSection 
-          logs={filteredLogs} // Or pass `clientSideLogs` if AI should scan all logs regardless of filters
+          logs={filteredLogs} // Pass filtered logs for targeted scanning
           onAnomaliesDetected={handleAnomaliesDetected}
         />
       </main>
@@ -173,3 +205,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
