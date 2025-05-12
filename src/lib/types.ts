@@ -27,3 +27,14 @@ export type AnomalousEvent = {
   isAnomalous: boolean;
   explanation: string;
 };
+
+// Configuration for the downloadable agent
+export interface AgentConfig {
+  agentName: string;
+  description: string;
+  monitoredSources: string[];
+  severityThreshold: Severity;
+  alertKeywords: string[];
+  notificationUrl?: string; // Optional webhook URL for alerts
+  isEnabled: boolean;
+}
