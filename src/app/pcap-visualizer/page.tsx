@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Metadata } from 'next';
@@ -128,6 +129,8 @@ export default function PcapVisualizerPage() {
     }
   };
 
+  const isPythonNotFoundError = pythonStderr?.includes('ENOENT') || error?.includes('ENOENT');
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <AppHeader />
@@ -141,7 +144,7 @@ export default function PcapVisualizerPage() {
             <CardDescription>
               Upload a <code>.pcap</code> file to analyze and visualize network traffic.
               The Python-based analysis may take a moment for larger files.
-              Ensure Python 3 and Scapy are installed on the server. Max file size: 50MB.
+              Ensure Python 3 and Scapy are installed on the server environment and `python3` is in the system PATH. Max file size: 50MB.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -174,6 +177,12 @@ export default function PcapVisualizerPage() {
             <AlertTitle>Error Processing PCAP</AlertTitle>
             <AlertDescription>
               <p>{error}</p>
+              {isPythonNotFoundError && (
+                <p className="mt-2 font-semibold">
+                  The error suggests that Python 3 (`python3`) could not be found. 
+                  Please ensure Python 3 is installed on the server environment and that the `python3` command is available in the system's PATH.
+                </p>
+              )}
               {pythonStdout && (
                 <details className="mt-2">
                   <summary className="cursor-pointer font-semibold">Python Script Output (stdout)</summary>
@@ -241,3 +250,4 @@ export default function PcapVisualizerPage() {
     </div>
   );
 }
+
