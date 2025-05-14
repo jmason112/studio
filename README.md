@@ -92,12 +92,11 @@ For this feature to work, you must provide a valid Gemini API key in your `.env`
    - Open PowerShell or Command Prompt
    - Clone the repository:
      ```
-    git clone https://github.com/jmason112/studio.git
-    cd studio
+     git clone https://github.com/jmason112/studio.git
+     cd studio
      ```
    - Start the application:
      ```
-     docker compose build
      docker compose up -d
      ```
 
