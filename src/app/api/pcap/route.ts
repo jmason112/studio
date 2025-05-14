@@ -9,6 +9,8 @@ import os from 'node:os';
 const PYTHON_SCRIPT_NAME = 'pcap-analyzer.py';
 const SCRIPTS_DIR = path.join(process.cwd(), 'src', 'lib', 'scripts');
 const PYTHON_SCRIPT_PATH = path.join(SCRIPTS_DIR, PYTHON_SCRIPT_NAME);
+// Use absolute path for the Python interpreter
+const PYTHON_INTERPRETER_PATH = path.join(process.cwd(), '.venv', 'Scripts', 'python.exe');
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -22,9 +24,18 @@ async function fileExists(filePath: string): Promise<boolean> {
 export async function POST(request: NextRequest) {
   let tempDir: string | undefined;
   try {
+    console.log(`Current working directory: ${process.cwd()}`);
+    console.log(`Looking for Python script at: ${PYTHON_SCRIPT_PATH}`);
+    console.log(`Looking for Python interpreter at: ${PYTHON_INTERPRETER_PATH}`);
+
     if (!await fileExists(PYTHON_SCRIPT_PATH)) {
       console.error(`Python script not found at ${PYTHON_SCRIPT_PATH}`);
       return NextResponse.json({ success: false, error: 'PCAP analysis script not found on server.' }, { status: 500 });
+    }
+
+    if (!await fileExists(PYTHON_INTERPRETER_PATH)) {
+      console.error(`Python interpreter not found at ${PYTHON_INTERPRETER_PATH}`);
+      return NextResponse.json({ success: false, error: 'Python interpreter not found on server.' }, { status: 500 });
     }
 
     const formData = await request.formData();
@@ -50,7 +61,7 @@ export async function POST(request: NextRequest) {
     await fs.writeFile(uploadedPcapPath, fileBuffer);
 
     // Execute the Python script
-    const pythonProcess = spawn('python3', [PYTHON_SCRIPT_PATH, pcapInputDirPath, pcapOutputDirPath], {
+    const pythonProcess = spawn(PYTHON_INTERPRETER_PATH, [PYTHON_SCRIPT_PATH, pcapInputDirPath, pcapOutputDirPath], {
         cwd: SCRIPTS_DIR, // Optional: set current working directory for the script if it relies on relative paths for other things
     });
 
@@ -75,7 +86,7 @@ export async function POST(request: NextRequest) {
         resolve(null); // Indicate error
       });
     });
-    
+
     console.log('Python script stdout:', stdout);
     if (stderr) {
       console.error('Python script stderr:', stderr);
@@ -91,7 +102,7 @@ export async function POST(request: NextRequest) {
       try {
         dnsMapping = JSON.parse(await fs.readFile(path.join(pcapOutputDirPath, 'dnsMapping.json'), 'utf8'));
       } catch { /* ignore if not found */ }
-      
+
       return NextResponse.json({
         success: false,
         error: `PCAP analysis script failed with exit code ${exitCode}.`,
@@ -116,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     const outputJson = JSON.parse(await fs.readFile(outputJsonPath, 'utf8'));
     const dnsMapping = JSON.parse(await fs.readFile(dnsMappingPath, 'utf8'));
-    
+
     return NextResponse.json({ success: true, outputJson, dnsMapping });
 
   } catch (error: any) {
