@@ -2,8 +2,6 @@
 
 A modern web application for analyzing network traffic logs and detecting anomalies using AI. This tool provides a clean, intuitive interface for visualizing network data, filtering logs, and identifying potential security threats with Gemini AI.
 
-![Network Traffic Analyzer](https://via.placeholder.com/800x400?text=Network+Traffic+Analyzer)
-
 ## Features
 
 - **Log Visualization**: Interactive charts and tables for network traffic analysis
@@ -24,8 +22,8 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/network-traffic-analyzer.git
-cd network-traffic-analyzer
+git clone [https://github.com/yourusername/network-traffic-analyzer.git](https://github.com/jmason112/studio.git)
+cd studio
 ```
 
 ### 2. Install dependencies
@@ -34,7 +32,7 @@ cd network-traffic-analyzer
 npm install
 ```
 
-### 3. Set up environment variables
+### 3. Set up environment variables (optional)
 
 Create a `.env` file in the root directory with the following content:
 
@@ -72,22 +70,6 @@ The application uses Google's Gemini AI to analyze log patterns and identify pot
 - Authentication failures
 
 For this feature to work, you must provide a valid Gemini API key in your `.env` file.
-
-## Project Structure
-
-```
-network-traffic-analyzer/
-├── public/              # Static assets
-├── src/
-│   ├── ai/              # AI integration code
-│   ├── app/             # Next.js app router
-│   ├── components/      # React components
-│   ├── lib/             # Utility functions and types
-│   └── styles/          # CSS styles
-├── .env                 # Environment variables
-├── package.json         # Project dependencies
-└── README.md            # This file
-```
 
 ## Technologies Used
 
