@@ -79,3 +79,33 @@ For this feature to work, you must provide a valid Gemini API key in your `.env`
 - [Scapy](https://scapy.net/) - Python packet manipulation
 - [Tailwind CSS](https://tailwindcss.com/) - Styling
 - [Radix UI](https://www.radix-ui.com/) - UI components
+
+## Running on Windows with Docker Desktop
+
+1. **Install Docker Desktop**
+   - Download Docker Desktop from [Docker's official website](https://www.docker.com/products/docker-desktop/)
+   - Double-click `Docker Desktop Installer.exe` to run the installer
+   - Follow the installation wizard instructions
+   - After installation, start Docker Desktop
+
+2. **Clone and run the application**
+   - Open PowerShell or Command Prompt
+   - Clone the repository:
+     ```
+    git clone https://github.com/jmason112/studio.git
+    cd studio
+     ```
+   - Start the application:
+     ```
+     docker compose build
+     docker compose up -d
+     ```
+
+3. **Access the application**
+   - Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
+
+4. **Stop the application**
+   - When finished, run:
+     ```
+     docker compose down
+     ```
