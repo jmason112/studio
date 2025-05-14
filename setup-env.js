@@ -7,7 +7,7 @@ const os = require('os');
 const isWindows = os.platform() === 'win32';
 const pythonCmd = isWindows ? 'python' : 'python3';
 const venvPath = path.join(process.cwd(), '.venv');
-const venvActivate = isWindows 
+const venvActivate = isWindows
   ? path.join(venvPath, 'Scripts', 'activate')
   : path.join(venvPath, 'bin', 'activate');
 const requirementsPath = path.join(process.cwd(), 'src', 'lib', 'scripts', 'requirements.txt');
@@ -18,17 +18,19 @@ try {
   // Create virtual environment if it doesn't exist
   if (!fs.existsSync(venvPath)) {
     console.log('Creating virtual environment...');
-    execSync(`${pythonCmd} -m venv .venv`);
+    execSync(`"${pythonCmd}" -m venv "${path.join(process.cwd(), '.venv')}"`);
   }
 
   // Install requirements
   console.log('Installing Python dependencies...');
-  const pipInstallCmd = isWindows
-    ? `.\\${path.join('.venv', 'Scripts', 'pip')} install -r ${requirementsPath}`
-    : `./${path.join('.venv', 'bin', 'pip')} install -r ${requirementsPath}`;
-  
-  execSync(pipInstallCmd);
-  
+
+  // Use proper path quoting for spaces in paths
+  const venvPipPath = isWindows
+    ? path.join(venvPath, 'Scripts', 'pip')
+    : path.join(venvPath, 'bin', 'pip');
+
+  execSync(`"${venvPipPath}" install -r "${requirementsPath}"`);
+
   console.log('Python environment setup complete!');
 } catch (error) {
   console.error('Error setting up Python environment:', error);
