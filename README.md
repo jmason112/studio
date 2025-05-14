@@ -97,6 +97,7 @@ For this feature to work, you must provide a valid Gemini API key in your `.env`
      ```
    - Start the application:
      ```
+     docker compose build
      docker compose up -d
      ```
 
